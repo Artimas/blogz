@@ -16,23 +16,27 @@ class Blog(db.Model):
     body = db.Column(db.String(1000))
     deleted = db.Column(db.Boolean)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    owner_name = db.Column(db.String(120))
 
-    def __init__(self, title, body, owner):
+    def __init__(self, title, body, owner, owner_name):
         self.title = title
         self.body = body
         self.deleted = False
         self.owner = owner
+        self.owner_name = owner_name
 
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
+    username = db.Column(db.String(120))
     blogs = db.relationship("Blog", backref="owner")
 
     def __init__(self, email, password):
         self.email = email
         self.password = password
+        self.username = email.split("@")[0]
 
 #TODO undo these comments for login funcitonality
 @app.before_request
@@ -45,12 +49,13 @@ def require_login():
 @app.route("/blog", methods=["POST", "GET"])
 def blog():
     blogs = Blog.query.filter_by(deleted=False).all()
-    return render_template("blog.html", title="Blogz", blogs=blogs)
+    return render_template("blog.html", title="Blogz", blogs=blogs, main=True)
 
 @app.route("/newpost", methods = ["POST", "GET"])
 def newpost():
     if request.method == "POST":
         owner = User.query.filter_by(email=session["email"]).first()
+        owner_name = owner.username
         title = request.form["title"]
         blog = request.form["body"]
         if title == "" or blog == "":
@@ -58,7 +63,7 @@ def newpost():
             return redirect("/newpost") 
         new_blog = request.form["title"]
         body = request.form["body"]
-        new_blog = Blog(new_blog, body, owner)
+        new_blog = Blog(new_blog, body, owner, owner_name)
         db.session.add(new_blog)
         db.session.commit()
         return redirect("/blogpost?id={}".format(new_blog.id))        
@@ -72,17 +77,20 @@ def register():
         password = request.form['password']
         verify = request.form['verify']
 
-        # TODO - validate user data
-    
-        existing_user = User.query.filter_by(email = email).first()
-        if not existing_user:
-            new_user = User(email,password)
-            db.session.add(new_user)
-            db.session.commit()
-            session["email"] = email
-            return redirect('/')
+        if password != verify:
+            flash("Please ensure password and verification match")
+            return redirect('/register')
         else:
-            return "<h1>duplicate user!</h1>"
+
+            existing_user = User.query.filter_by(email = email).first()
+            if not existing_user:
+                new_user = User(email,password)
+                db.session.add(new_user)
+                db.session.commit()
+                session["email"] = email
+                return redirect('/')
+            else:
+                return "<h1>duplicate user!</h1>"
 
     return render_template('register.html')
 

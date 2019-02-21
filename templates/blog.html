@@ -6,6 +6,9 @@
         {% for blog in blogs%}
             <a href="/blogpost?id={{blog.id}}" name="title">{{blog.title}}</a>
             <p>{{blog.body}}</p>
+            {% if main==True %}
+                <p>Written by:<a href='/userblog?user={{blog.owner_id}}' name="owner">{{blog.owner_name}}</a></p>
+            {% endif %}
         {% endfor%}
         </form>
         <hr />

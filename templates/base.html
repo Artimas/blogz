@@ -10,11 +10,17 @@
     </head>
     <body>
 
-            <div>
-                <a href="/logout">logout</a>
+            <div align="left">
                 <a href="/newpost">Add new Blog</a>
-                <a href="/">Main Blog</a>
+                <a href="/blog">Main Blog</a>
+                <a href="/myblog">My Blog</a>
+                <a href="/">Home Page</a>
+                <div align="right">
+                    <a href="/login">login</a>
+                    <a href="/logout">logout</a>
+                </div>
             </div>
+            
 
         {% with messages = get_flashed_messages(with_categories=True) %}
             <ul>
@@ -26,6 +32,6 @@
 
         {% block content %}
         {% endblock %}
-
+            
     </body>
 </html>

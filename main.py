@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://build-a-blog:password@localhost:8889/build-a-blog'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://blogz:password@localhost:8889/blogz'
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 app.secret_key = 'y337kGcys&xP3B'
@@ -37,18 +37,15 @@ class User(db.Model):
 #TODO undo these comments for login funcitonality
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "register"]
+    allowed_routes = ["login", "register", "blog"]
 
     if request.endpoint not in allowed_routes and "email" not in session:
         return redirect('/login')
 
-@app.route("/", methods=["POST", "GET"])
-def index():
-    owner = User.query.filter_by(email=session["email"]).first()
-        
-
-    blogs = Blog.query.filter_by(deleted=False, owner=owner).all()
-    return render_template("blog.html", title="Build-a-blog", blogs=blogs)
+@app.route("/blog", methods=["POST", "GET"])
+def blog():
+    blogs = Blog.query.filter_by(deleted=False).all()
+    return render_template("blog.html", title="Blogz", blogs=blogs)
 
 @app.route("/newpost", methods = ["POST", "GET"])
 def newpost():
@@ -99,7 +96,7 @@ def login():
         if user and user.password == password:
             session["email"] = email
             flash("Logged in")
-            return redirect('/')
+            return redirect('/blog')
         else:
             flash("User password incorrect, or user does not exist", "error")
 
@@ -110,6 +107,26 @@ def blogpost():
     id = request.args.get("id")
     blog = Blog.query.filter_by(id=id).first()
     return render_template("blogpost.html", title=blog.title, body=blog.body)
+
+@app.route("/myblog")
+def myBlog():
+    owner = User.query.filter_by(email=session["email"]).first()
+    blogs = Blog.query.filter_by(deleted=False, owner=owner).all()
+    username = owner.email.split("@")[0]
+    return  render_template("blog.html", title="{}'s blog".format(username), blogs = blogs, username = username)
+
+@app.route('/')
+def index():
+    users = User.query.all()
+    return render_template("index.html", users = users)
+
+@app.route("/userblog")
+def userBlog():
+    user=request.args.get('user')
+    owner = User.query.filter_by(id= user).first()
+    blogs = Blog.query.filter_by(deleted=False, owner=owner).all()
+    username = owner.email.split('@')[0]
+    return render_template("blog.html", title="{}'s blog".format(username), blogs = blogs, username = username)
 
 @app.route('/logout')
 def logout():

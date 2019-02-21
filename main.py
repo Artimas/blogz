@@ -90,7 +90,8 @@ def register():
                 session["email"] = email
                 return redirect('/')
             else:
-                return "<h1>duplicate user!</h1>"
+                flash("Username has already been taken")
+                return redirect("/register")
 
     return render_template('register.html')
 
